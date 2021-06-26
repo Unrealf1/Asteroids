@@ -92,7 +92,7 @@ private:
 
     void render_pixels(const std::vector<Pixel>& pxs) {
         for (const auto& px : pxs) {
-            if (px.x < 0 || px.x > _buffer_width || px.y < 0 || px.y > _buffer_height) {
+            if (px.x < 0 || px.x >= _buffer_width || px.y < 0 || px.y >= _buffer_height) {
                 continue;
             }
             _render_buffer[px.y * _buffer_width + px.x] = px.c;
