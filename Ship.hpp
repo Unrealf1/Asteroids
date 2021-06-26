@@ -11,6 +11,7 @@ class Ship: public Drawable, public Updatable, public Movable {
 public:
     Ship(position_t pos): Movable(pos) {
         _graphics = std::make_unique<Square>(4.0f, pos);
+        //_graphics = std::make_unique<Circle>(4.0f, pos);
     }
 
     void draw(Renderer& renderer) override {
