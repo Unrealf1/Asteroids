@@ -19,6 +19,11 @@ public:
             float x = static_cast<float>(i % 100);
             float y = static_cast<float>(i * i % 100);
 
+            if (i % 5) {
+                stars.push_back({x + 25.0f, y, color});
+                ++i;
+            }
+
             if (i % 7 == 0) {
                 x += 7.0f;
             }

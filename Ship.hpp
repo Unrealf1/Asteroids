@@ -30,7 +30,7 @@ public:
 
 private:
     float acceleration = 0.9f;
-    float speed_decay = 0.1f;
+    float speed_decay = 0.08f;
     float min_speed = 0.000001f;
     float rotation_speed = 1.5f;
     float angle = 0.0f;
@@ -82,7 +82,7 @@ private:
             float additional_speed = acceleration * info.dt;
             speed.x += dir.x * additional_speed;
             speed.y += dir.y * additional_speed;
-        } 
+        }
 
         position_t friction = {speed.x * speed_decay, speed.y * speed_decay};
         position_t speed_diff = {speed.x - friction.x, speed.y - friction.y}; 
