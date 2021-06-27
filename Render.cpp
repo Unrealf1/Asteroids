@@ -52,6 +52,19 @@ void Renderer::render_line(const points_t& points) {
     render_pixels(pixels);
 }
 
+void Renderer::render_cycle_line(const points_t& points) {
+    if (points.empty()) {
+        return;
+    }
+
+    // TODO: this could be optimized
+    points_t new_points = points;
+    new_points.reserve(points.size() + 1);
+    new_points.push_back(points[0]);
+
+    render_line(new_points);
+}
+
 void Renderer::render_fill(const points_t& points) {
     std::cerr << "ERROR: 'render_fill' is not yet implemented!\n";
 }

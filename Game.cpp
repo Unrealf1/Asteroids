@@ -7,6 +7,8 @@
 #include "Render.hpp"
 #include "Primitives.hpp"
 #include "Ship.hpp"
+#include "Commons.hpp"
+#include "Space.hpp"
 
 #include <iostream>
 #include <memory>
@@ -20,11 +22,12 @@
 //
 //  schedule_quit_game() - quit game after act()
 
-static std::vector<std::shared_ptr<Drawable>> drawable_objects;
-static std::vector<std::shared_ptr<Updatable>> updatable_objects;
+
+static obj_container<Drawable> drawable_objects;
+static obj_container<Updatable> updatable_objects;
 
 Renderer& get_renderer() {
-  static Renderer r(&buffer[0][0], SCREEN_HEIGHT, SCREEN_WIDTH, colors::white);
+  static Renderer r(&buffer[0][0], SCREEN_HEIGHT, SCREEN_WIDTH, colors::black);
   return r;
 }
 
@@ -35,7 +38,8 @@ void initialize() {
   auto& r = get_renderer();
 
   //drawable_objects.push_back(std::make_shared<Square>(2.0f, position_t{50.0f, 50.0f}));
-  
+  drawable_objects.push_back(std::make_shared<Space>(150));
+
   auto ship = std::make_shared<Ship>(position_t{50.0f, 50.0f});
   drawable_objects.push_back(ship);
   updatable_objects.push_back(ship);
@@ -48,10 +52,15 @@ void act(float dt) {
   if (is_key_pressed(VK_ESCAPE)) {
     schedule_quit_game();
   }
-  updateinfo info{dt};
+  obj_container<Drawable> drawable_objects_addition;
+  obj_container<Updatable> updatable_objects_addition;
+  updateinfo info{dt, drawable_objects_addition, updatable_objects_addition};
   for (auto& obj : updatable_objects) {
     obj->update(info);
   }
+
+  std::ranges::move(drawable_objects_addition, std::back_inserter(drawable_objects));
+  std::ranges::move(updatable_objects_addition, std::back_inserter(updatable_objects));
 }
 
 // fill buffer in this function
@@ -59,14 +68,16 @@ void act(float dt) {
 void draw()
 {
   // clear backbuffer
-  // memset(buffer, uint32_t(0xFF0000u), SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
-  // buffer[0][0] = 0xFFF0000;
-  // for (int i = 0; i < 20; ++i) {
+  //memset(buffer, colors::red, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
+
+  // for (int i = 0; i < SCREEN_HEIGHT; ++i) {
   //   for (int j = 0; j < SCREEN_WIDTH; ++j) {
-  //     buffer[i][j] = 0xFF0000u;
+      
+  //     buffer[i][j] = colors::blue; //+ j*512;
+  //     //std::cout << std::hex << buffer[i][j] << '\n';
   //   }
   // }
-  // std::cout << uint32_t(buffer[0][0]) << std::endl;
+
   Renderer& renderer = get_renderer();
   renderer.clear();
 

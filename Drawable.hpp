@@ -4,8 +4,13 @@
 #include "Commons.hpp"
 
 
+class Updatable;
+class Drawable;
+
 struct updateinfo {
     float dt;
+    obj_container<Drawable>& drawable;
+    obj_container<Updatable>& updatable;
 };
 
 class Updatable {

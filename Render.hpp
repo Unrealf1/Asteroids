@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 #include "Colors.hpp"
 #include "Engine.h"
 #include "Commons.hpp"
@@ -25,7 +26,7 @@ struct Pixel {
 };
 
 enum class RenderMode {
-    line, dots, fill
+    line, dots, fill, cycle_line
 };
 
 // struct RenderOptions {
@@ -62,17 +63,23 @@ public:
                 break;
 
             case RenderMode::dots:
-                render_line(points);
+                render_dots(points);
                 break;
 
             case RenderMode::fill:
-                render_line(points);
+                render_fill(points);
+                break;
+
+            case RenderMode::cycle_line:
+                render_cycle_line(points);
                 break;
         }
     }
 
     void clear() {
-        std::memset(_render_buffer, _clear_color, _buffer_height * _buffer_width * sizeof(color_t));
+        // memset can set only a value of byte size
+        // std::memset(_render_buffer, _clear_color, _buffer_height * _buffer_width * sizeof(color_t));
+        std::fill(_render_buffer, _render_buffer + _buffer_height * _buffer_width, _clear_color);
     }   
 
 private:
@@ -99,8 +106,53 @@ private:
         }
     }
 
+    void render_cycle_line(const points_t& points);
     void render_line(const points_t& points);
     void render_dots(const points_t& points);
     void render_fill(const points_t& points);
 
 };
+
+
+
+// counter clockwise, angle in radians
+inline position_t rotate_point(const position_t& position, const position_t& center, float angle) {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+
+    position_t center_respect_pos = {position.x - center.x, position.y - center.y};
+    position_t center_respect_rot = {
+        center_respect_pos.x * c - center_respect_pos.y * s, 
+        center_respect_pos.x * s + center_respect_pos.y * c
+    };
+
+    return {center_respect_rot.x + center.x, center_respect_rot.y + center.y};
+}
+
+inline points_t rotate_points(const points_t& points, const position_t& center, float angle) {
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+
+    //TODO: make faster by calculating cos and sin only one time
+    points_t res;
+    res.reserve(points.size());
+    std::ranges::transform(points, std::back_inserter(res), [&](const Point& p) -> Point { 
+        auto new_pos = rotate_point({p.x, p.y}, center, angle);
+        return {new_pos.x, new_pos.y, p.c};
+    });
+    return res;
+}
+
+inline points_t move_points(const points_t& points, const position_t& vec) {
+    points_t res;
+    res.reserve(points.size());
+    std::ranges::transform(points, std::back_inserter(res), [&](const Point& p) -> Point { 
+        return {p.x + vec.x, p.y + vec.y, p.c};
+    });
+    return res;
+}
+
+
+inline position_t get_direction(float angle) {
+    return {std::sin(angle), std::cos(angle)};
+}

@@ -5,6 +5,7 @@
 #include <memory>
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 
 
 class group: public Drawable {
@@ -23,22 +24,23 @@ public:
     void draw(Renderer& renderer) override {
         auto offset = _scale / 2.0f;
         
-        auto left = _pos.x - offset;
-        auto right = _pos.x + offset;
+        auto left = -offset;
+        auto right = offset;
 
-        auto top = _pos.y - offset;
-        auto bot = _pos.y + offset;
+        auto top = -offset;
+        auto bot = offset;
 
+        points_t mesh = {
+            {left, top, _col},
+            {left, bot, _col},
+            {right, bot, _col},
+            {right, top, _col}
+        };
 
         renderer.render(
-            {
-                {left, top, _col},
-                {left, bot, _col},
-                {right, bot, _col},
-                {right, top, _col},
-                {left, top, _col}
-            }, 
-            RenderMode::line);
+            move_points(rotate_points(mesh, {0.0f, 0.0f}, _rot), _pos), 
+            RenderMode::cycle_line
+        );
     }
 
 private:
@@ -50,21 +52,17 @@ public:
     Circle(float radius, position_t center_position, color_t color = colors::black, uint32_t num_points = 50): 
     InteractiveDrawable(center_position, 0.0f, radius), _num_points(num_points), _col(color)  { 
         _points.reserve(num_points);
-        auto num_steps = num_points / 2;
-        float x_step = 2.0f / static_cast<float>(num_steps);
-        float initial_x = -1.0f;
+        const auto pi = std::numbers::pi_v<float>;
 
-        for (uint32_t i = 0; i < num_steps; ++i) {
-            float current_x = initial_x + x_step * i;
-            _points.push_back({current_x, std::sqrt(radius - current_x*current_x), color});
-        }
-        // `i < num_steps` is because of unsigned arithmetic
-        for (uint32_t i = num_steps - 1u; i < num_steps; --i) {
-            std::cout << i << ' ' << num_steps - 1u << '\n';
-            float current_x = initial_x + x_step * i;
-            _points.push_back({current_x, -std::sqrt(radius - current_x*current_x), color});
+        float current_angle = 0.0f;
+        float angle_step = pi * 2.0f / static_cast<float>(num_points);
+
+        for (uint32_t i = 0; i < num_points; ++i) {
+            _points.push_back({std::cos(current_angle) * radius, std::sin(current_angle) * radius, color});
+            current_angle += angle_step;
         }
     }
+
 
     void draw(Renderer& renderer) override {
         points_t transposed_points;
@@ -74,7 +72,7 @@ public:
         });
 
 
-        renderer.render(transposed_points, RenderMode::line);
+        renderer.render(transposed_points, RenderMode::cycle_line);
     }
 
 
@@ -83,4 +81,34 @@ private:
     color_t _col;
     uint32_t _num_points;
     points_t _points;
+};
+
+class EquilateralTriangle : public InteractiveDrawable {
+public:
+    EquilateralTriangle(float side_len, position_t center_position, color_t color = colors::black): 
+    InteractiveDrawable(center_position, 0.0f, side_len), _col(color), _circumradius(side_len / std::sqrt(3.0f))  {
+        float a = side_len / 2.0f;
+        float b = _circumradius / 2.0f;
+
+        _mesh = {
+            {0.0f, -_circumradius, colors::red},
+            {-a, b, _col},
+            {a, b, _col},
+        };
+     }
+
+
+    void draw(Renderer& renderer) override {        
+        renderer.render(
+            move_points(rotate_points(_mesh, {0.0f, 0.0f}, _rot), _pos), 
+            RenderMode::cycle_line
+        );
+    }
+
+private:
+    color_t _col;
+    points_t _points;
+    float _circumradius;
+    points_t _mesh;
+
 };

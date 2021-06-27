@@ -3,6 +3,7 @@
 #include "Drawable.hpp"
 #include "Primitives.hpp"
 #include "Engine.h"
+#include "Bullet.hpp"
 
 #include <memory>
 
@@ -10,8 +11,9 @@
 class Ship: public Drawable, public Updatable, public Movable {
 public:
     Ship(position_t pos): Movable(pos) {
-        _graphics = std::make_unique<Square>(4.0f, pos);
-        //_graphics = std::make_unique<Circle>(4.0f, pos);
+        _graphics = std::make_unique<EquilateralTriangle>(ship_size, pos, colors::green);
+        //_graphics = std::make_unique<Square>(ship_size, pos, colors::green);
+        //_graphics = std::make_unique<Circle>(ship_size, pos);
     }
 
     void draw(Renderer& renderer) override {
@@ -21,35 +23,66 @@ public:
     void update(const updateinfo& info) override {
         update_speed(info);
         update_position(info);
+        update_rotation(info);
+
+        shoot(info);
     }
 
 private:
     float acceleration = 0.9f;
-    float speed_decay = 0.2f;
+    float speed_decay = 0.1f;
     float min_speed = 0.000001f;
+    float rotation_speed = 1.5f;
+    float angle = 0.0f;
+    float ship_size = 4.0f;
+    float bullet_speed = 5.0f;
     position_t speed = {0.0f, 0.0f};
+    float shooting_rate = 0.3f;
+    float since_last_shot = 0.0f;
+
     std::unique_ptr<InteractiveDrawable> _graphics;
+
+    void shoot(const updateinfo& info) {
+        since_last_shot += info.dt;
+        if (!is_key_pressed(VK_SPACE) || since_last_shot < shooting_rate) {
+            return;
+        }
+
+        since_last_shot = 0.0f;
+
+        auto direction = get_direction(angle);
+        position_t bullet_pos = {_pos.x + direction.x * ship_size, _pos.y - direction.y * ship_size};
+
+        auto bullet = std::make_shared<Bullet>(bullet_pos, position_t{direction.x * bullet_speed, direction.y * bullet_speed});
+        info.drawable.push_back(bullet);
+        info.updatable.push_back(bullet);
+    }
+
+    void update_rotation(const updateinfo& info) {
+        if (is_key_pressed(VK_LEFT)) {
+            angle -= rotation_speed*info.dt;
+        }
+
+        if (is_key_pressed(VK_RIGHT)) {
+            angle += rotation_speed*info.dt;
+        }
+        _graphics->set_rotation(angle);
+    }
 
     void update_position(const updateinfo& info) {
         _pos.x += speed.x;
-        _pos.y += speed.y;
+        _pos.y -= speed.y;
         _graphics->set_position(_pos);
     }
 
     void update_speed(const updateinfo& info) {
-        std::cout << "speed is: " << speed.x << ' ' << speed.y << '\n';
-        if (is_key_pressed(VK_LEFT)) {
-            speed.x -= acceleration * info.dt;
-        }
-        if (is_key_pressed(VK_RIGHT)) {
-            speed.x += acceleration * info.dt;
-        } 
         if (is_key_pressed(VK_UP)) {
-            speed.y -= acceleration * info.dt;
+            auto dir = get_direction(angle);
+            //std::cout << "angle: " << angle << "\ndirection: " << dir.x << ' ' << dir.y << '\n';
+            float additional_speed = acceleration * info.dt;
+            speed.x += dir.x * additional_speed;
+            speed.y += dir.y * additional_speed;
         } 
-        if (is_key_pressed(VK_DOWN)) {
-            speed.y += acceleration * info.dt;
-        }
 
         position_t friction = {speed.x * speed_decay, speed.y * speed_decay};
         position_t speed_diff = {speed.x - friction.x, speed.y - friction.y}; 
