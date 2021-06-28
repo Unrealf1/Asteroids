@@ -44,14 +44,39 @@ void initialize() {
   drawable_objects.push_back(ship);
   updatable_objects.push_back(ship);
 
+  auto ship2 = std::make_shared<Ship>(position_t{57.0f, 52.0f});
+  drawable_objects.push_back(ship2);
+  updatable_objects.push_back(ship2);
+
+  auto ship3 = std::make_shared<Ship>(position_t{43.0f, 52.0f});
+  drawable_objects.push_back(ship3);
+  updatable_objects.push_back(ship3);
+
+
 }
 
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
 void act(float dt) {
+  static uint64_t counter = 0;
+  static float since_last;
+  since_last += dt;
+  if (counter % 100 == 0) {
+      auto fps = 1.0f / (since_last / 100.0f);
+      std::cout << "fps: " << fps << '\n';
+      std::cout << "updatable size: " << updatable_objects.size() << '\n';
+      since_last = 0.0f;
+  }
+
   if (is_key_pressed(VK_ESCAPE)) {
     schedule_quit_game();
   }
+
+  const auto rem_dr = std::ranges::remove_if(drawable_objects, &Drawable::dr_useless);
+  drawable_objects.erase(rem_dr.begin(), rem_dr.end());
+  const auto rem_upd = std::ranges::remove_if(updatable_objects, &Updatable::upd_useless);
+  updatable_objects.erase(rem_upd.begin(), rem_upd.end());
+
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
   updateinfo info{dt, drawable_objects_addition, updatable_objects_addition};

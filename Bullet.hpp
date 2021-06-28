@@ -13,6 +13,23 @@ public:
 
     void draw(Renderer& renderer) override {
         _graphics->draw(renderer);
+        float useless_offset = 20.0f;
+        if (
+            _pos.x < -useless_offset || 
+            _pos.x > renderer.get_width() + useless_offset ||
+            _pos.y < -useless_offset ||
+            _pos.y > renderer.get_height() + useless_offset
+        ) {
+            _useless = true;
+        }
+    }
+
+    bool upd_useless() override {
+        return _useless;
+    }
+
+    bool dr_useless() override {
+        return _useless;
     }
 
     void update(const updateinfo& info) override {
@@ -22,6 +39,7 @@ public:
 private:
     std::unique_ptr<InteractiveDrawable> _graphics;
     position_t _speed;
+    bool _useless = false;
 
     void update_position(const updateinfo& info) {
         _pos.x += _speed.x;

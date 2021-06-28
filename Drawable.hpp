@@ -17,11 +17,13 @@ class Updatable {
 public:
     virtual ~Updatable() = default;
     virtual void update(const updateinfo&) = 0;
+    virtual bool upd_useless() {return false;}
 };
 
 class Drawable {
 public:
     virtual void draw(Renderer&) = 0;
+    virtual bool dr_useless() {return false;}
 
     virtual ~Drawable() = default;
 };
