@@ -9,9 +9,11 @@
 #include "Ship.hpp"
 #include "Commons.hpp"
 #include "Space.hpp"
+#include "Asteroid.hpp"
 
 #include <iostream>
 #include <memory>
+#include <numbers>
 
 //
 //  You are free to modify this file
@@ -25,6 +27,7 @@
 
 static obj_container<Drawable> drawable_objects;
 static obj_container<Updatable> updatable_objects;
+static obj_container<Asteroid> asteroids;
 
 Renderer& get_renderer() {
   static Renderer r(&buffer[0][0], SCREEN_HEIGHT, SCREEN_WIDTH, colors::black);
@@ -59,13 +62,14 @@ void initialize() {
 // dt - time elapsed since the previous update (in seconds)
 void act(float dt) {
   static uint64_t counter = 0;
-  static float since_last;
-  since_last += dt;
+  ++counter;
+  static float since_last_output;
+  since_last_output += dt;
   if (counter % 100 == 0) {
-      auto fps = 1.0f / (since_last / 100.0f);
+      auto fps = 1.0f / (since_last_output / 100.0f);
       std::cout << "fps: " << fps << '\n';
       std::cout << "updatable size: " << updatable_objects.size() << '\n';
-      since_last = 0.0f;
+      since_last_output = 0.0f;
   }
 
   if (is_key_pressed(VK_ESCAPE)) {
@@ -76,6 +80,8 @@ void act(float dt) {
   drawable_objects.erase(rem_dr.begin(), rem_dr.end());
   const auto rem_upd = std::ranges::remove_if(updatable_objects, &Updatable::upd_useless);
   updatable_objects.erase(rem_upd.begin(), rem_upd.end());
+  const auto rem_ast = std::ranges::remove_if(asteroids, &Updatable::upd_useless);
+  asteroids.erase(rem_ast.begin(), rem_ast.end());
 
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
@@ -86,31 +92,44 @@ void act(float dt) {
 
   std::ranges::move(drawable_objects_addition, std::back_inserter(drawable_objects));
   std::ranges::move(updatable_objects_addition, std::back_inserter(updatable_objects));
+
+  static float since_last_asteroid = 0.0f;
+  since_last_asteroid += dt;
+
+  float asteroid_creation_rate = 0.7;
+  if (since_last_asteroid >= asteroid_creation_rate && asteroids.size() < 20) {
+    since_last_asteroid = 0.0f;
+    auto r = get_renderer();
+    float x = std::min(r.get_width(), static_cast<float>(counter % 150));
+    float y = std::min(r.get_height(), static_cast<float>(counter % 100));
+    position_t position = {x, y};
+    float angle = static_cast<float>(counter % 360) / (2.0f * std::numbers::pi_v<float>);
+    position_t speed = {static_cast<float>(counter % 10) * 0.1f + 0.2f, static_cast<float>((counter % 23) % 10) * 0.1f + 0.2f};
+    auto direction = get_direction(angle);
+    speed = {speed.x * direction.x, speed.y * direction.y};
+    auto rot_speed = static_cast<float>(counter % 20);
+    uint32_t num_parts = counter % 5;
+
+    auto ast = std::make_shared<Asteroid>(position, speed, rot_speed, num_parts);
+
+    std::cout << "created asteroid at position " << position.x << ' ' << position.y << '\n';
+
+    drawable_objects.push_back(ast);
+    updatable_objects.push_back(ast);
+    asteroids.push_back(ast);
+  }
+
 }
 
 // fill buffer in this function
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per R, G, B)
-void draw()
-{
-  // clear backbuffer
-  //memset(buffer, colors::red, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
-
-  // for (int i = 0; i < SCREEN_HEIGHT; ++i) {
-  //   for (int j = 0; j < SCREEN_WIDTH; ++j) {
-      
-  //     buffer[i][j] = colors::blue; //+ j*512;
-  //     //std::cout << std::hex << buffer[i][j] << '\n';
-  //   }
-  // }
-
+void draw() {
   Renderer& renderer = get_renderer();
   renderer.clear();
 
   for (auto& obj : drawable_objects) {
     obj->draw(renderer);
   }
-
-  //memset(buffer, 0b11111111101010101010000000000000, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
 }
 
 // free game data in this function

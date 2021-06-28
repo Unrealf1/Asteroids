@@ -20,6 +20,7 @@ void Renderer::render_line(const points_t& points) {
     }
 
     std::vector<Pixel> pixels;
+    pixels.reserve(points.size() * 2);
 
     auto last_point = points[0];
 
@@ -28,8 +29,11 @@ void Renderer::render_line(const points_t& points) {
         auto diff_x = current_point.x - last_point.x;
         auto diff_y = current_point.y - last_point.y;
 
-        //TODO: make this less stupid and adapt line density
-        auto num_steps = std::max(_buffer_height, _buffer_width);
+        auto num_pixels_x = std::lround(std::abs(diff_x) * virtual_to_pixel_x);
+        auto num_pixels_y = std::lround(std::abs(diff_y) * virtual_to_pixel_y);
+
+        auto num_steps_old = std::max(_buffer_height, _buffer_width);
+        auto num_steps = std::max(num_pixels_x, num_pixels_y);
         auto step_x = diff_x / static_cast<float>(num_steps);
         auto step_y = diff_y / static_cast<float>(num_steps);
 

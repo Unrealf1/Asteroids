@@ -78,8 +78,11 @@ public:
 
     void clear() {
         // memset can set only a value of byte size
-        // std::memset(_render_buffer, _clear_color, _buffer_height * _buffer_width * sizeof(color_t));
-        std::fill(_render_buffer, _render_buffer + _buffer_height * _buffer_width, _clear_color);
+        if (_clear_color == colors::white || _clear_color == colors::black) {
+            std::memset(_render_buffer, _clear_color, _buffer_height * _buffer_width * sizeof(color_t));
+        } else {
+            std::fill(_render_buffer, _render_buffer + _buffer_height * _buffer_width, _clear_color);
+        }
     }   
 
 private:
@@ -91,9 +94,12 @@ private:
     const float virtual_width = virtual_height * static_cast<float>(_buffer_width) / static_cast<float>(_buffer_height);
     //RenderOptions _options;
 
+    const float virtual_to_pixel_x = static_cast<float>(_buffer_width) / virtual_width;
+    const float virtual_to_pixel_y = static_cast<float>(_buffer_height) / virtual_height;
+
     Pixel to_pixel(const Point& p) const {
-        auto x = static_cast<int32_t>(std::lround(p.x / virtual_width * static_cast<float>(_buffer_width)));
-        auto y = static_cast<int32_t>(std::lround(p.y / virtual_height * static_cast<float>(_buffer_height)));
+        auto x = static_cast<int32_t>(std::lround(p.x * virtual_to_pixel_x));
+        auto y = static_cast<int32_t>(std::lround(p.y * virtual_to_pixel_y));
         return {x, y, p.c};
     }
 
