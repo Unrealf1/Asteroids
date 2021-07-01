@@ -159,6 +159,12 @@ inline points_t move_points(const points_t& points, const position_t& vec) {
 }
 
 
-inline position_t get_direction(float angle) {
-    return {std::sin(angle), std::cos(angle)};
+inline position_t get_direction(float angle, float len = 1.0f) {
+    return {std::sin(angle) * len, std::cos(angle) * len};
+}
+
+inline bool positions_close(const position_t& first, const position_t& second, float eps = 0.00000000001f) {
+    auto x_diff = first.x - second.x;
+    auto y_diff = first.y - second.y;
+    return (((x_diff*x_diff) + (y_diff*y_diff)) < eps*eps);
 }

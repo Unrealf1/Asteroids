@@ -3,6 +3,7 @@
 #include "Drawable.hpp"
 #include "Primitives.hpp"
 #include <memory>
+#include "Asteroid.hpp"
 
 
 class Bullet : public Drawable, public Updatable, public Movable {
@@ -34,6 +35,14 @@ public:
 
     void update(const updateinfo& info) override {
         update_position(info);
+
+        for (auto& ast : info.asteroids) {
+            if (ast->check_collision(_pos)) {
+                ast->destroy();
+                _useless = true;
+                break;
+            }
+        }
     }
 
 private:

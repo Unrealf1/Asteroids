@@ -12,12 +12,19 @@ class Ship: public Drawable, public Updatable, public Movable {
 public:
     Ship(position_t pos): Movable(pos) {
         _graphics = std::make_unique<EquilateralTriangle>(ship_size, pos, colors::green);
+        //TODO: pass constructor parameters directly to emplace_back
+        _engine_graphics.emplace_back(std::make_unique<Square>(ship_size/3.0f, position_t{pos.x, pos.y + ship_size/3.0f}, 0xff9f00));
         //_graphics = std::make_unique<Square>(ship_size, pos, colors::green);
         //_graphics = std::make_unique<Circle>(ship_size, pos);
     }
 
     void draw(Renderer& renderer) override {
         _graphics->draw(renderer);
+        if (_engine_on) {
+            for (auto& g : _engine_graphics) {
+                g->draw(renderer);
+            }
+        }
     }
 
     void update(const updateinfo& info) override {
@@ -26,6 +33,8 @@ public:
         update_rotation(info);
 
         shoot(info);
+        
+        _engine_on = is_key_pressed(VK_UP);
     }
 
 private:
@@ -39,8 +48,14 @@ private:
     position_t speed = {0.0f, 0.0f};
     float shooting_rate = 0.3f;
     float since_last_shot = 0.0f;
+    bool _engine_on = false;
 
+    std::vector<std::unique_ptr<InteractiveDrawable>> _engine_graphics;
     std::unique_ptr<InteractiveDrawable> _graphics;
+
+    position_t get_engine_graphics_pos() {
+        return rotate_point({_pos.x, _pos.y + ship_size/3.0f}, _pos, angle);
+    }
 
     void shoot(const updateinfo& info) {
         since_last_shot += info.dt;
@@ -67,12 +82,14 @@ private:
             angle += rotation_speed*info.dt;
         }
         _graphics->set_rotation(angle);
+        _engine_graphics[0]->set_rotation(angle);
     }
 
     void update_position(const updateinfo& info) {
         _pos.x += speed.x;
         _pos.y -= speed.y;
         _graphics->set_position(_pos);
+        _engine_graphics[0]->set_position(get_engine_graphics_pos());
     }
 
     void update_speed(const updateinfo& info) {

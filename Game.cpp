@@ -47,15 +47,43 @@ void initialize() {
   drawable_objects.push_back(ship);
   updatable_objects.push_back(ship);
 
-  auto ship2 = std::make_shared<Ship>(position_t{57.0f, 52.0f});
-  drawable_objects.push_back(ship2);
-  updatable_objects.push_back(ship2);
+  // auto ship2 = std::make_shared<Ship>(position_t{57.0f, 52.0f});
+  // drawable_objects.push_back(ship2);
+  // updatable_objects.push_back(ship2);
 
-  auto ship3 = std::make_shared<Ship>(position_t{43.0f, 52.0f});
-  drawable_objects.push_back(ship3);
-  updatable_objects.push_back(ship3);
+  // auto ship3 = std::make_shared<Ship>(position_t{43.0f, 52.0f});
+  // drawable_objects.push_back(ship3);
+  // updatable_objects.push_back(ship3);
 
 
+}
+
+std::shared_ptr<Asteroid> createAsteroid(uint64_t counter) {
+    counter;
+    auto r = get_renderer();
+    float spawn_angle = static_cast<float>(counter % 360) / 360.0f * (2.0f * std::numbers::pi_v<float>);
+    float direction_angle = spawn_angle + std::numbers::pi_v<float>;
+    float direction_flaw = static_cast<float>(counter*counter*counter % 45) / 180.0f * std::numbers::pi_v<float>;
+    if (counter % 2) {
+      direction_angle += direction_flaw;
+    } else {
+      direction_angle -= direction_flaw;
+    }
+
+    static float spawn_offset = std::min(r.get_width(), r.get_height()) / 2.0f + 10.0f;
+    auto spawn_dir = get_direction(spawn_angle, spawn_offset);
+    position_t center = {r.get_width()/2.0f, r.get_height()/2.0f};
+
+    position_t spawn_position = {center.x + spawn_dir.x, center.y + spawn_dir.y};
+
+    float speed_value = (static_cast<float>(counter % 9 + 1.0f) / 10.0f) * 0.7f;
+    position_t speed = get_direction(direction_angle, speed_value);
+    speed.y *= -1.0f;
+    auto rot_speed = static_cast<float>(counter % 20);
+    uint32_t num_parts = counter % 5;
+    std::cout << "Creating asteroid at position " << spawn_position.x << ' ' << spawn_position.y << '\n';
+    std::cout << "Speed: " << speed.x << ' ' << speed.y << '\n';
+    return std::make_shared<Asteroid>(spawn_position, speed, rot_speed, num_parts);
 }
 
 // this function is called to update game data,
@@ -68,7 +96,7 @@ void act(float dt) {
   if (counter % 100 == 0) {
       auto fps = 1.0f / (since_last_output / 100.0f);
       std::cout << "fps: " << fps << '\n';
-      std::cout << "updatable size: " << updatable_objects.size() << '\n';
+      //std::cout << "updatable size: " << updatable_objects.size() << '\n';
       since_last_output = 0.0f;
   }
 
@@ -85,7 +113,13 @@ void act(float dt) {
 
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
-  updateinfo info{dt, drawable_objects_addition, updatable_objects_addition};
+  updateinfo info{
+    dt, 
+    drawable_objects_addition, 
+    updatable_objects_addition, 
+    asteroids
+  };
+
   for (auto& obj : updatable_objects) {
     obj->update(info);
   }
@@ -97,22 +131,9 @@ void act(float dt) {
   since_last_asteroid += dt;
 
   float asteroid_creation_rate = 0.7;
-  if (since_last_asteroid >= asteroid_creation_rate && asteroids.size() < 20) {
+  if (since_last_asteroid >= asteroid_creation_rate && asteroids.size() < 15) {
     since_last_asteroid = 0.0f;
-    auto r = get_renderer();
-    float x = std::min(r.get_width(), static_cast<float>(counter % 150));
-    float y = std::min(r.get_height(), static_cast<float>(counter % 100));
-    position_t position = {x, y};
-    float angle = static_cast<float>(counter % 360) / (2.0f * std::numbers::pi_v<float>);
-    position_t speed = {static_cast<float>(counter % 10) * 0.1f + 0.2f, static_cast<float>((counter % 23) % 10) * 0.1f + 0.2f};
-    auto direction = get_direction(angle);
-    speed = {speed.x * direction.x, speed.y * direction.y};
-    auto rot_speed = static_cast<float>(counter % 20);
-    uint32_t num_parts = counter % 5;
-
-    auto ast = std::make_shared<Asteroid>(position, speed, rot_speed, num_parts);
-
-    std::cout << "created asteroid at position " << position.x << ' ' << position.y << '\n';
+    auto ast = createAsteroid(counter);
 
     drawable_objects.push_back(ast);
     updatable_objects.push_back(ast);

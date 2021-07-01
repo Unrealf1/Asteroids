@@ -6,11 +6,19 @@
 
 class Updatable;
 class Drawable;
+class Asteroid;
 
 struct updateinfo {
     float dt;
     obj_container<Drawable>& drawable;
     obj_container<Updatable>& updatable;
+    const obj_container<Asteroid>& asteroids;
+};
+
+class Collidable {
+public:
+    virtual ~Collidable() = default;
+    virtual bool check_collision(const position_t& pos) = 0;
 };
 
 class Updatable {
@@ -97,7 +105,7 @@ protected:
 
 };
 
-class InteractiveDrawable : public Drawable, public Movable, public Rotatable, public Scalable {
+class InteractiveDrawable : public Drawable, public Movable, public Rotatable, public Scalable, public Collidable {
 public:
     virtual ~InteractiveDrawable() = default;
     InteractiveDrawable(position_t center_position, float angle, float scale): Movable(center_position), Rotatable(0.0f), Scalable(scale) {}

@@ -43,6 +43,12 @@ public:
         );
     }
 
+    bool check_collision(const position_t& pos) override {
+        bool x_cond = (pos.x < (_pos.x + _scale / 2.0f)) && (pos.x > (_pos.x - _scale/2.0f));
+        bool y_cond = (pos.y < (_pos.y + _scale / 2.0f)) && (pos.y > (_pos.y - _scale/2.0f));
+        return x_cond && y_cond;
+    }
+
 private:
     color_t _col;
 };
@@ -50,7 +56,7 @@ private:
 class Circle : public InteractiveDrawable {
 public:
     Circle(float radius, position_t center_position, color_t color = colors::black, uint32_t num_points = 50): 
-    InteractiveDrawable(center_position, 0.0f, radius), _num_points(num_points), _col(color)  { 
+    InteractiveDrawable(center_position, 0.0f, radius), _num_points(num_points), _col(color), _radius(radius)  { 
         _points.reserve(num_points);
         const auto pi = std::numbers::pi_v<float>;
 
@@ -75,12 +81,16 @@ public:
         renderer.render(transposed_points, RenderMode::cycle_line);
     }
 
+    bool check_collision(const position_t& pos) override {
+        return positions_close(pos, _pos, _radius*1.1f);
+    }
 
 
 private:
     color_t _col;
     uint32_t _num_points;
     points_t _points;
+    float _radius;
 };
 
 class EquilateralTriangle : public InteractiveDrawable {
@@ -97,6 +107,9 @@ public:
         };
      }
 
+    bool check_collision(const position_t& pos) override {
+        return false;
+    }
 
     void draw(Renderer& renderer) override {        
         renderer.render(

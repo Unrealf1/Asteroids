@@ -3,14 +3,17 @@
 #include "Drawable.hpp"
 #include "Primitives.hpp"
 #include <memory>
+#include <algorithm>
 
 
-class Asteroid : public Drawable, public Updatable, public Movable {
+class Asteroid : public Drawable, public Updatable, public Movable, public Collidable {
 public:
     Asteroid(position_t pos, position_t speed, float rotation_speed, uint32_t num_parts): Movable(pos), _speed(speed), _rotation_speed(rotation_speed) {
+        
+        //_graphics.push_back(std::make_unique<Circle>(5.0f, position_t{0.0f, 0.0f}, colors::white, 20));
         for (uint32_t i = 0; i < num_parts; ++i) {
             _graphics.push_back(std::make_unique<Circle>(
-                static_cast<float>(i % 3 + 1) * 1.5f, position_t{pos.x + i, pos.y + i}, colors::white, 20));
+                static_cast<float>(i % 3 + 1) * 2.0f, position_t{pos.x + i, pos.y + i}, colors::white, 20));
         }
     }
 
@@ -30,6 +33,16 @@ public:
             std::cout << "deleting asteroid as it is too far. x/y: " << _pos.x << " / " << _pos.y << '\n';
             _useless = true;
         }
+    }
+
+    void destroy() {
+        _useless = true;
+    }
+
+    bool check_collision(const position_t& pos) override {
+        return std::ranges::any_of(_graphics, [&](std::unique_ptr<InteractiveDrawable>& dr) -> bool{
+            return dr->check_collision(pos);
+        });
     }
 
     bool upd_useless() override {
