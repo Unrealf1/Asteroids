@@ -7,6 +7,7 @@
 #include "PowerUps.hpp"
 
 #include <memory>
+#include <array>
 
 
 class Ship: public Drawable, public Updatable, public Movable {
@@ -77,9 +78,26 @@ private:
         return rotate_point({_pos.x, _pos.y + ship_size/3.0f}, _pos, angle);
     }
 
+    std::array<position_t, 4> get_collision_points() {
+        auto r = ship_size / std::sqrt(3.0f);
+        auto dir1 = get_direction(angle, r);
+        auto dir2 = get_direction(angle + std::numbers::pi_v<float> / 3.0f, r);
+        auto dir3 = get_direction(angle + std::numbers::pi_v<float> / 3.0f * 2.0f, r);
+        return {
+            position_t{_pos.x + dir1.x, _pos.y + dir1.y},
+            position_t{_pos.x + dir2.x, _pos.y + dir2.y},
+            position_t{_pos.x + dir3.x, _pos.y + dir3.y},
+            position_t{_pos.x, _pos.y}
+        };
+    }
+
     void check_powerup_collision(const updateinfo& info) {
+        auto points = get_collision_points();
+
         for (auto& pw : info.powerups) {
-            if (pw->check_collision(_pos)) {
+            auto collision_check = [&](const position_t& pos) -> bool { return pw->check_collision(pos); };
+            bool collision = std::ranges::any_of(points, collision_check);
+            if (collision) {
                 pw->destroy();
                 switch (pw->get_type())
                 {
@@ -102,8 +120,11 @@ private:
         if (_invincibility_remaining > 0.0f) {
             return;
         }
+        auto points = get_collision_points();
         for (auto& ast : info.asteroids) {
-            if (ast->check_collision(_pos)) {
+            auto collision_check = [&](const position_t& pos) -> bool { return ast->check_collision(pos); };
+            bool collision = std::ranges::any_of(points, collision_check);
+            if (collision) {
                 ast->destroy();
                 info.lives -= 1;
                 _invincibility_remaining += _invincibility_time;

@@ -560,6 +560,7 @@ static void drawSymbol(char c, position_t pos, Renderer& renderer, color_t color
         float rad = 0.05f;
         Circle c(rad * std::min(width, height), {left + rad*width, bot + rad*height}, color, 5u);
         c.draw(renderer);
+        break;
     }
     case '+': {
         renderer.render(
