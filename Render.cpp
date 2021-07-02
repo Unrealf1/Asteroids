@@ -43,7 +43,7 @@ void Renderer::render_line(const points_t& points) {
             intermediate_point.x += step_x;
             intermediate_point.y += step_y;
 
-            auto ratio = (current_point.x - intermediate_point.x) / diff_x;
+            auto ratio = (current_point.x - intermediate_point.x) / (diff_x + 1e-10f);
             intermediate_point.c = last_point.c * ratio + current_point.c * (1.0f - ratio);
         }
         last_point = current_point;

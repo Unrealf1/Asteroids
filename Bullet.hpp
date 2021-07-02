@@ -34,15 +34,16 @@ public:
     }
 
     void update(const updateinfo& info) override {
-        update_position(info);
-
         for (auto& ast : info.asteroids) {
             if (ast->check_collision(_pos)) {
                 ast->destroy();
                 _useless = true;
+                info.score += 1;
                 break;
             }
         }
+
+        update_position(info);
     }
 
 private:

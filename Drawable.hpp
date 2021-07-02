@@ -7,12 +7,16 @@
 class Updatable;
 class Drawable;
 class Asteroid;
+class PowerUp;
 
 struct updateinfo {
     float dt;
     obj_container<Drawable>& drawable;
     obj_container<Updatable>& updatable;
     const obj_container<Asteroid>& asteroids;
+    const obj_container<PowerUp>& powerups;
+    uint64_t& score;
+    uint64_t& lives;
 };
 
 class Collidable {
