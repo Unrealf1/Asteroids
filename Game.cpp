@@ -204,7 +204,6 @@ void act(float dt) {
       asteroids.push_back(ast);
     }
 
-
   }
 
 }

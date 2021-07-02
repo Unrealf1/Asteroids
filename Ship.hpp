@@ -53,10 +53,10 @@ public:
     }
 
 private:
-    float acceleration = 0.9f;
+    float acceleration = 0.95f;
     float speed_decay = 0.08f;
     float min_speed = 0.000001f;
-    float rotation_speed = 1.5f;
+    float rotation_speed = 2.0f;
     float angle = 0.0f;
     float ship_size = 4.0f;
     float bullet_speed = 5.0f;
