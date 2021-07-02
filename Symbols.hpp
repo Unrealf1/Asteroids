@@ -561,6 +561,23 @@ static void drawSymbol(char c, position_t pos, Renderer& renderer, color_t color
         Circle c(rad * std::min(width, height), {left + rad*width, bot + rad*height}, color, 5u);
         c.draw(renderer);
     }
+    case '+': {
+        renderer.render(
+            {
+                {pos.x, top, color},
+                {pos.x, bot, color},
+            },
+            RenderMode::line
+        );
+        renderer.render(
+            {
+                left_mid,
+                right_mid
+            },
+            RenderMode::line
+        );
+        break;
+    }
     default:            
         break;
     }

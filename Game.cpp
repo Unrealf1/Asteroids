@@ -143,6 +143,7 @@ void act(float dt) {
 
   // some settings
   constexpr uint32_t asteroids_per_level = 10;
+  constexpr uint32_t points_per_level = 10;
   constexpr uint32_t fps_rate = 150u; // once per how many frames fps is calculated
   constexpr float pause_between_levels = 3.0f;
 
@@ -218,30 +219,34 @@ void act(float dt) {
   const auto rem_pw = std::ranges::remove_if(powerups, &Updatable::upd_useless);
   powerups.erase(rem_pw.begin(), rem_pw.end());
 
-  // temporary containers for new objects
-  obj_container<Drawable> drawable_objects_addition;
-  obj_container<Updatable> updatable_objects_addition;
-  updateinfo info{
-    pause ? 0.0f : dt,
-    counter,
-    drawable_objects_addition, 
-    updatable_objects_addition, 
-    asteroids,
-    powerups,
-    score,
-    lives,
-    renderer.get_width(),
-    renderer.get_height(),
-    fps,
-    level
-  };
+  // actual update
+  if (!pause) {
+    // temporary containers for new objects
+    obj_container<Drawable> drawable_objects_addition;
+    obj_container<Updatable> updatable_objects_addition;
+    updateinfo info{
+      pause ? 0.0f : dt,
+      counter,
+      drawable_objects_addition, 
+      updatable_objects_addition, 
+      asteroids,
+      powerups,
+      score,
+      lives,
+      renderer.get_width(),
+      renderer.get_height(),
+      fps,
+      level
+    };
 
-  for (auto& obj : updatable_objects) {
-    obj->update(info);
+    for (auto& obj : updatable_objects) {
+      obj->update(info);
+    }
+
+    std::ranges::move(drawable_objects_addition, std::back_inserter(drawable_objects));
+    std::ranges::move(updatable_objects_addition, std::back_inserter(updatable_objects));
   }
-
-  std::ranges::move(drawable_objects_addition, std::back_inserter(drawable_objects));
-  std::ranges::move(updatable_objects_addition, std::back_inserter(updatable_objects));
+  
 
   float asteroid_creation_rate = std::max(0.85f / static_cast<float>(level), 0.1f);
   if (since_last_asteroid >= asteroid_creation_rate && asteroids_left_on_level > 0 && !pause) {
@@ -262,8 +267,11 @@ void act(float dt) {
 
   }
 
+  // level is cleared
   if (asteroids_left_on_level == 0 && asteroids.size() == 0) {
     left_for_pause = pause_between_levels;
+    auto additional_points = points_per_level * level;
+    score += additional_points;
     level++;
     asteroids_left_on_level = asteroids_per_level * level;
     auto level_text = std::make_shared<SelfDestructableDrawable>(
@@ -271,8 +279,16 @@ void act(float dt) {
       0.0f
     );
 
+    auto points_text = std::make_shared<SelfDestructableDrawable>(
+      std::move(std::make_unique<Text>("+" + std::to_string(additional_points) + " POINTS", position_t{10.0f, renderer.get_height() / 2.0f + 9.0f*1.5f}, 5.0f, colors::white)),
+      0.0f
+    );
+
     drawable_objects.push_back(level_text);
     updatable_objects.push_back(level_text);
+
+    drawable_objects.push_back(points_text);
+    updatable_objects.push_back(points_text);
   }
 }
 
