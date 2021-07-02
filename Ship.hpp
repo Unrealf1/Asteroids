@@ -159,6 +159,20 @@ private:
     void update_position(const updateinfo& info) {
         _pos.x += speed.x;
         _pos.y -= speed.y;
+
+        if (_pos.x > info.right_border) {
+            _pos.x -= info.right_border;
+        }
+        if (_pos.x < 0.0f) {
+            _pos.x += info.right_border;
+        }
+        if (_pos.y > info.bot_border) {
+            _pos.y -= info.bot_border;
+        }
+        if (_pos.y < 0.0f) {
+            _pos.y += info.bot_border;
+        }
+
         _graphics->set_position(_pos);
         _engine_graphics[0]->set_position(get_engine_graphics_pos());
         _invincibility_graphics->set_position(_pos);

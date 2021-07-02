@@ -18,6 +18,8 @@ struct updateinfo {
     obj_container<PowerUp>& powerups;
     uint64_t& score;
     uint64_t& lives;
+    float right_border;
+    float bot_border;
 };
 
 class Collidable {

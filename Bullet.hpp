@@ -8,21 +8,12 @@
 
 class Bullet : public Drawable, public Updatable, public Movable {
 public:
-    Bullet(position_t pos, position_t speed): Movable(pos), _speed(speed) {
+    Bullet(position_t pos, position_t speed, float livetime = 0.3f): Movable(pos), _speed(speed), _time_left(livetime) {
         _graphics = std::make_unique<Square>(0.5f, pos, colors::yellow);
     }
 
     void draw(Renderer& renderer) override {
         _graphics->draw(renderer);
-        float useless_offset = 20.0f;
-        if (
-            _pos.x < -useless_offset || 
-            _pos.x > renderer.get_width() + useless_offset ||
-            _pos.y < -useless_offset ||
-            _pos.y > renderer.get_height() + useless_offset
-        ) {
-            _useless = true;
-        }
     }
 
     bool upd_useless() override {
@@ -44,16 +35,36 @@ public:
         }
 
         update_position(info);
+
+        _time_left -= info.dt;
+        if (_time_left < 0.0f) {
+            _useless = true;
+        }
     }
 
 private:
     std::unique_ptr<InteractiveDrawable> _graphics;
     position_t _speed;
     bool _useless = false;
+    float _time_left; 
 
     void update_position(const updateinfo& info) {
         _pos.x += _speed.x;
         _pos.y -= _speed.y;
+
+        if (_pos.x > info.right_border) {
+            _pos.x -= info.right_border;
+        }
+        if (_pos.x < 0.0f) {
+            _pos.x += info.right_border;
+        }
+        if (_pos.y > info.bot_border) {
+            _pos.y -= info.bot_border;
+        }
+        if (_pos.y < 0.0f) {
+            _pos.y += info.bot_border;
+        }
+
         _graphics->set_position(_pos);
     }
 

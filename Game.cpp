@@ -161,6 +161,8 @@ void act(float dt) {
   const auto rem_pw = std::ranges::remove_if(powerups, &Updatable::upd_useless);
   powerups.erase(rem_pw.begin(), rem_pw.end());
 
+  auto& renderer = get_renderer();
+
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
   updateinfo info{
@@ -171,7 +173,9 @@ void act(float dt) {
     asteroids,
     powerups,
     score,
-    lives
+    lives,
+    renderer.get_width(),
+    renderer.get_height()
   };
 
   for (auto& obj : updatable_objects) {
