@@ -88,13 +88,12 @@ private:
                         info.lives += 1;
                         break;
                     case powerup_type::invincibility:
-                        _invincibility_remaining += _invincibility_time * 2.0f;
+                        _invincibility_remaining += 5.0f;
                         break;
                     case powerup_type::double_cannon:
                         _double_bullet_remaining += _double_bullet_time;
                         break;
                 }
-                _invincibility_remaining = _invincibility_time;
                 break;
             }
         }
