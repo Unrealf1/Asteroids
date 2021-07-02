@@ -47,20 +47,11 @@ void initialize() {
 
   auto& r = get_renderer();
 
-  //drawable_objects.push_back(std::make_shared<Square>(2.0f, position_t{50.0f, 50.0f}));
   drawable_objects.push_back(std::make_shared<Space>(150));
 
   auto ship = std::make_shared<Ship>(position_t{50.0f, 50.0f});
   drawable_objects.push_back(ship);
   updatable_objects.push_back(ship);
-
-  // auto ship2 = std::make_shared<Ship>(position_t{57.0f, 52.0f});
-  // drawable_objects.push_back(ship2);
-  // updatable_objects.push_back(ship2);
-
-  // auto ship3 = std::make_shared<Ship>(position_t{43.0f, 52.0f});
-  // drawable_objects.push_back(ship3);
-  // updatable_objects.push_back(ship3);
 
   auto score = std::make_shared<Score>();
   gui.push_back(score);
@@ -91,8 +82,6 @@ std::shared_ptr<Asteroid> createAsteroid(uint64_t counter) {
     speed.y *= -1.0f;
     auto rot_speed = static_cast<float>(counter % 20);
     uint32_t num_parts = counter % 4 + 1;
-    // std::cout << "Creating asteroid at position " << spawn_position.x << ' ' << spawn_position.y << '\n';
-    // std::cout << "Speed: " << speed.x << ' ' << speed.y << '\n';
     return std::make_shared<Asteroid>(spawn_position, speed, rot_speed, num_parts);
 }
 
@@ -117,8 +106,6 @@ std::shared_ptr<PowerUp> createPowerup(uint64_t counter) {
     float speed_value = (static_cast<float>(counter % 9 + 1.0f) / 10.0f) * 0.7f;
     position_t speed = get_direction(direction_angle, speed_value);
     speed.y *= -1.0f;
-    // std::cout << "Creating powerup at position " << spawn_position.x << ' ' << spawn_position.y << '\n';
-    // std::cout << "Speed: " << speed.x << ' ' << speed.y << '\n';
     powerup_type type;
 
     switch (counter % 3) {
@@ -137,7 +124,6 @@ std::shared_ptr<PowerUp> createPowerup(uint64_t counter) {
       break;
     }
 
-
     return std::make_shared<PowerUp>(spawn_position, speed, type);
 }
 
@@ -148,12 +134,12 @@ void act(float dt) {
   ++counter;
   static float since_last_output;
   since_last_output += dt;
-  if (counter % 100 == 0) {
-      auto fps = 1.0f / (since_last_output / 100.0f);
+  if (counter % 200 == 0) {
+      auto fps = 1.0f / (since_last_output / 200.0f);
       std::cout << "fps: " << fps << '\n';
       std::cout << "score: " << score << '\n';
       std::cout << "lives: " << lives << '\n';
-      //std::cout << "updatable size: " << updatable_objects.size() << '\n';
+      std::cout << "asteroids: " << asteroids.size() << '\n';
       since_last_output = 0.0f;
   }
 
@@ -178,7 +164,8 @@ void act(float dt) {
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
   updateinfo info{
-    dt, 
+    dt,
+    counter,
     drawable_objects_addition, 
     updatable_objects_addition, 
     asteroids,
@@ -201,7 +188,7 @@ void act(float dt) {
   static float since_last_asteroid = 0.0f;
   since_last_asteroid += dt;
 
-  float asteroid_creation_rate = 0.7;
+  float asteroid_creation_rate = 0.85;
   if (since_last_asteroid >= asteroid_creation_rate && asteroids.size() < 15) {
     since_last_asteroid = 0.0f;
 

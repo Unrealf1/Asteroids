@@ -11,10 +11,11 @@ class PowerUp;
 
 struct updateinfo {
     float dt;
+    const uint64_t counter;
     obj_container<Drawable>& drawable;
     obj_container<Updatable>& updatable;
-    const obj_container<Asteroid>& asteroids;
-    const obj_container<PowerUp>& powerups;
+    obj_container<Asteroid>& asteroids;
+    obj_container<PowerUp>& powerups;
     uint64_t& score;
     uint64_t& lives;
 };
