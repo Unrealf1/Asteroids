@@ -20,6 +20,8 @@ struct updateinfo {
     uint64_t& lives;
     float right_border;
     float bot_border;
+    float fps;
+    uint32_t level;
 };
 
 class Collidable {
@@ -41,6 +43,28 @@ public:
     virtual bool dr_useless() {return false;}
 
     virtual ~Drawable() = default;
+};
+
+class SelfDestructableDrawable: public Updatable, public Drawable {
+public:
+    SelfDestructableDrawable(std::unique_ptr<Drawable> dr, float time): _ptr(std::move(dr)), _time_left(time) { }
+    virtual void draw(Renderer& r) {
+        _ptr->draw(r);
+    }
+    virtual bool dr_useless() {return _useless;}
+
+    virtual void update(const updateinfo& info) {
+        _time_left -= info.dt;
+        if (_time_left < 0.0f) {
+            _useless = true;
+        }
+    }
+    virtual bool upd_useless() {return _useless;}
+
+private:
+    float _time_left;
+    std::unique_ptr<Drawable> _ptr;
+    bool _useless = false;
 };
 
 using rotation_t = float; //angle in radians

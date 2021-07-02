@@ -2,14 +2,17 @@
 
 #include "Drawable.hpp"
 #include "Primitives.hpp"
-#include <memory>
 #include "Asteroid.hpp"
+
+#include <memory>
+#include <array>
 
 
 class Bullet : public Drawable, public Updatable, public Movable {
 public:
     Bullet(position_t pos, position_t speed, float livetime = 0.3f): Movable(pos), _speed(speed), _time_left(livetime) {
-        _graphics = std::make_unique<Square>(0.5f, pos, colors::yellow);
+        _graphics = std::make_unique<Square>(_bullet_size, pos, colors::yellow);
+        _last_pos = _pos;
     }
 
     void draw(Renderer& renderer) override {
@@ -25,8 +28,21 @@ public:
     }
 
     void update(const updateinfo& info) override {
+        float offset = _bullet_size / 2.0f;
+
+
+        std::array<position_t, 5> points {
+            position_t{_pos.x - offset, _pos.y - offset},
+            position_t{_pos.x - offset, _pos.y + offset},
+            position_t{_pos.x + offset, _pos.y + offset},
+            position_t{_pos.x + offset, _pos.y - offset},
+            
+            position_t{(_pos.x + _last_pos.x) / 2.0f, (_pos.y + _last_pos.y) / 2.0f}
+        };
         for (auto& ast : info.asteroids) {
-            if (ast->check_collision(_pos)) {
+            auto collision_check = [&](const position_t& pos) -> bool { return ast->check_collision(pos); };
+            bool collision = std::ranges::any_of(points, collision_check);
+            if (collision) {
                 ast->destroy();
                 _useless = true;
                 info.score += 1;
@@ -47,10 +63,13 @@ private:
     position_t _speed;
     bool _useless = false;
     float _time_left; 
+    float _bullet_size = 0.7f;
+    position_t _last_pos;
 
     void update_position(const updateinfo& info) {
-        _pos.x += _speed.x;
-        _pos.y -= _speed.y;
+        _last_pos = _pos;
+        _pos.x += _speed.x * info.dt;
+        _pos.y -= _speed.y * info.dt;
 
         if (_pos.x > info.right_border) {
             _pos.x -= info.right_border;

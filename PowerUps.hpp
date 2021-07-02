@@ -72,8 +72,8 @@ private:
     powerup_type _type;
 
     void update_position(const updateinfo& info) {
-        _pos.x += _speed.x;
-        _pos.y -= _speed.y;
+        _pos.x += _speed.x * info.dt;
+        _pos.y -= _speed.y * info.dt;
 
         _graphics->set_position(_pos);
     }

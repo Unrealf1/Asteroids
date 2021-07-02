@@ -53,13 +53,13 @@ public:
     }
 
 private:
-    float acceleration = 0.95f;
+    float acceleration = 50.0f;
     float speed_decay = 0.08f;
     float min_speed = 0.000001f;
-    float rotation_speed = 2.0f;
+    float rotation_speed = 2.3f;
     float angle = 0.0f;
     float ship_size = 4.0f;
-    float bullet_speed = 5.0f;
+    float bullet_speed = 330.0f;
     position_t speed = {0.0f, 0.0f};
     float shooting_rate = 0.3f;
     float since_last_shot = 0.0f;
@@ -80,7 +80,6 @@ private:
     void check_powerup_collision(const updateinfo& info) {
         for (auto& pw : info.powerups) {
             if (pw->check_collision(_pos)) {
-                std::cout << "power up!\n";
                 pw->destroy();
                 switch (pw->get_type())
                 {
@@ -115,7 +114,7 @@ private:
 
     void shoot(const updateinfo& info) {
         since_last_shot += info.dt;
-        if (!is_key_pressed(VK_SPACE) || since_last_shot < shooting_rate) {
+        if (!is_key_pressed(VK_SPACE) || since_last_shot < shooting_rate || info.dt == 0.0f) {
             return;
         }
 
@@ -157,8 +156,8 @@ private:
     }
 
     void update_position(const updateinfo& info) {
-        _pos.x += speed.x;
-        _pos.y -= speed.y;
+        _pos.x += speed.x * info.dt;
+        _pos.y -= speed.y * info.dt;
 
         if (_pos.x > info.right_border) {
             _pos.x -= info.right_border;

@@ -43,7 +43,7 @@ static uint64_t lives = 3;
 
 // initialize game data in this function
 void initialize() {
-  std::cout << "initializing...\n";
+  //std::cout << "initializing...\n";
 
   auto& r = get_renderer();
 
@@ -55,12 +55,17 @@ void initialize() {
 
   auto score = std::make_shared<Score>();
   gui.push_back(score);
+  updatable_objects.push_back(score);
   auto lives = std::make_shared<Lives>();
   gui.push_back(lives);
+  updatable_objects.push_back(lives);
+  auto fps = std::make_shared<FPS>();
+  gui.push_back(fps);
+  updatable_objects.push_back(fps);
 }
 
 std::shared_ptr<Asteroid> createAsteroid(uint64_t counter) {
-    counter;
+    counter % 2 ? counter : (counter/10);
     auto r = get_renderer();
     float spawn_angle = static_cast<float>(counter % 360) / 360.0f * (2.0f * std::numbers::pi_v<float>);
     float direction_angle = spawn_angle + std::numbers::pi_v<float>;
@@ -77,7 +82,7 @@ std::shared_ptr<Asteroid> createAsteroid(uint64_t counter) {
 
     position_t spawn_position = {center.x + spawn_dir.x, center.y + spawn_dir.y};
 
-    float speed_value = (static_cast<float>(counter % 9 + 1.0f) / 10.0f) * 0.7f;
+    float speed_value = (static_cast<float>(counter % 9 + 4) / 10.0f) * 20.0f;
     position_t speed = get_direction(direction_angle, speed_value);
     speed.y *= -1.0f;
     auto rot_speed = static_cast<float>(counter % 20);
@@ -86,7 +91,8 @@ std::shared_ptr<Asteroid> createAsteroid(uint64_t counter) {
 }
 
 std::shared_ptr<PowerUp> createPowerup(uint64_t counter) {
-    counter;
+    // counter % 10 = 0
+    counter /= 10;
     auto r = get_renderer();
     float spawn_angle = static_cast<float>(counter % 360) / 360.0f * (2.0f * std::numbers::pi_v<float>);
     float direction_angle = spawn_angle + std::numbers::pi_v<float>;
@@ -103,7 +109,7 @@ std::shared_ptr<PowerUp> createPowerup(uint64_t counter) {
 
     position_t spawn_position = {center.x + spawn_dir.x, center.y + spawn_dir.y};
 
-    float speed_value = (static_cast<float>(counter % 9 + 1.0f) / 10.0f) * 0.7f;
+    float speed_value = (static_cast<float>(counter % 9 + 4) / 10.0f) * 7.0f;
     position_t speed = get_direction(direction_angle, speed_value);
     speed.y *= -1.0f;
     powerup_type type;
@@ -130,28 +136,79 @@ std::shared_ptr<PowerUp> createPowerup(uint64_t counter) {
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
 void act(float dt) {
-  static uint64_t counter = 0;
-  ++counter;
-  static float since_last_output;
-  since_last_output += dt;
-  if (counter % 200 == 0) {
-      auto fps = 1.0f / (since_last_output / 200.0f);
-      std::cout << "fps: " << fps << '\n';
-      std::cout << "score: " << score << '\n';
-      std::cout << "lives: " << lives << '\n';
-      std::cout << "asteroids: " << asteroids.size() << '\n';
-      since_last_output = 0.0f;
-  }
-
+  //quit on escape
   if (is_key_pressed(VK_ESCAPE)) {
     schedule_quit_game();
   }
 
-  if (lives == 0) {
-    std::cout << "Sorry, you lost!\nYour score is " << score << '\n';
-    schedule_quit_game();
+  // some settings
+  constexpr uint32_t asteroids_per_level = 10;
+  constexpr uint32_t fps_rate = 150u; // once per how many frames fps is calculated
+  constexpr float pause_between_levels = 3.0f;
+
+  auto& renderer = get_renderer();
+
+  // setup static variables
+  static bool pause = false; // is game paused
+  static uint32_t level = 1; // current level
+  static uint32_t asteroids_left_on_level = asteroids_per_level * level;
+  static uint64_t counter = 0; // how many times this function was called. used for pseudorandom
+  static float since_last_output; // time elapsed since last fps calculation
+  static float fps = 0.0f; // current fps
+  static float left_for_pause = 0.0f; // how much time left for game to be paused
+  static bool finished = false;
+  static float since_last_asteroid = 0.0f; // time since last asteroid was created
+  
+
+  if (finished) {
+    return;
   }
 
+  // update static variables
+  ++counter;
+  since_last_asteroid += dt;
+  since_last_output += dt;
+
+  if (left_for_pause > 0.0f) {
+    pause = true;
+    left_for_pause -= dt;
+  } else {
+    pause = false;
+  }
+
+  // calculate fps
+  if (counter % fps_rate == 0) {
+      fps = 1.0f / (since_last_output / static_cast<float>(fps_rate));
+      since_last_output = 0.0f;
+  }
+
+  // finish the game
+  if (lives == 0) {
+    finished = true;
+
+    float text_height = renderer.get_height() / 2.0f - 10.0f;
+    float text_size = 9.0f;
+
+    // ALL YOUR BASE ARE BELONG TO US
+    auto game_over = std::make_shared<Text>("GAME OVER", position_t{10.0f, text_height}, text_size, colors::white);
+    drawable_objects.push_back(game_over);
+    text_height += text_size * 1.5f;
+
+    text_size = 4.0f;
+    auto score_text = std::make_shared<Text>("YOUR SCORE - " + std::to_string(score), position_t{10.0f, text_height}, text_size, colors::white);
+    drawable_objects.push_back(score_text);
+    text_height += text_size * 1.5f;
+
+    auto level_text = std::make_shared<Text>("YOUR LEVEL - " + std::to_string(level), position_t{10.0f, text_height}, text_size, colors::white);
+    drawable_objects.push_back(level_text);
+    text_height += text_size * 1.5f;
+
+    text_size = 2.0f;
+    auto quit_text = std::make_shared<Text>("PRESS ESC TO QUIT", position_t{30.0f, text_height}, text_size, 0xeeeeee);
+    drawable_objects.push_back(quit_text);
+  }
+
+  // remove all useless objects
   const auto rem_dr = std::ranges::remove_if(drawable_objects, &Drawable::dr_useless);
   drawable_objects.erase(rem_dr.begin(), rem_dr.end());
   const auto rem_upd = std::ranges::remove_if(updatable_objects, &Updatable::upd_useless);
@@ -161,12 +218,11 @@ void act(float dt) {
   const auto rem_pw = std::ranges::remove_if(powerups, &Updatable::upd_useless);
   powerups.erase(rem_pw.begin(), rem_pw.end());
 
-  auto& renderer = get_renderer();
-
+  // temporary containers for new objects
   obj_container<Drawable> drawable_objects_addition;
   obj_container<Updatable> updatable_objects_addition;
   updateinfo info{
-    dt,
+    pause ? 0.0f : dt,
     counter,
     drawable_objects_addition, 
     updatable_objects_addition, 
@@ -175,25 +231,21 @@ void act(float dt) {
     score,
     lives,
     renderer.get_width(),
-    renderer.get_height()
+    renderer.get_height(),
+    fps,
+    level
   };
 
   for (auto& obj : updatable_objects) {
     obj->update(info);
   }
 
-  for (auto& obj : gui) {
-    obj->update(info);
-  }
-
   std::ranges::move(drawable_objects_addition, std::back_inserter(drawable_objects));
   std::ranges::move(updatable_objects_addition, std::back_inserter(updatable_objects));
 
-  static float since_last_asteroid = 0.0f;
-  since_last_asteroid += dt;
-
-  float asteroid_creation_rate = 0.85;
-  if (since_last_asteroid >= asteroid_creation_rate && asteroids.size() < 15) {
+  float asteroid_creation_rate = std::max(0.85f / static_cast<float>(level), 0.1f);
+  if (since_last_asteroid >= asteroid_creation_rate && asteroids_left_on_level > 0 && !pause) {
+    asteroids_left_on_level--;
     since_last_asteroid = 0.0f;
 
     if (counter % 10 == 0) {
@@ -210,6 +262,18 @@ void act(float dt) {
 
   }
 
+  if (asteroids_left_on_level == 0 && asteroids.size() == 0) {
+    left_for_pause = pause_between_levels;
+    level++;
+    asteroids_left_on_level = asteroids_per_level * level;
+    auto level_text = std::make_shared<SelfDestructableDrawable>(
+      std::move(std::make_unique<Text>("LEVEL " + std::to_string(level), position_t{10.0f, renderer.get_height() / 2.0f}, 9.0f, colors::white)),
+      0.0f
+    );
+
+    drawable_objects.push_back(level_text);
+    updatable_objects.push_back(level_text);
+  }
 }
 
 // fill buffer in this function
